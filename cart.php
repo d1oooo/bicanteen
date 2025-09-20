@@ -61,9 +61,51 @@ if ($result->num_rows > 0) {
 <head>
     <meta charset="UTF-8">
     <title>Keranjang Saya - BiCanteen</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- Tambahkan ini -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <style>
+         @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .products-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+            .product-card {
+                flex-direction: column;
+                width: 100%;
+                max-width: 100%;
+                margin: 0;
+                box-sizing: border-box;
+            }
+            .product-image-container {
+                width: 100%;
+                text-align: center;
+            }
+            .product-image {
+                max-width: 90vw;
+                height: auto;
+            }
+            .qty-control {
+                gap: 6px;
+            }
+            .checkout-button, .back-btn {
+                width: 100%;
+                font-size: 1rem;
+                padding: 12px 0;
+            }
+            .section-title {
+                font-size: 1.3rem;
+            }
+        }
         .qty-control {
             display: flex;
             align-items: center;
@@ -118,6 +160,27 @@ if ($result->num_rows > 0) {
         .delete-btn:hover {
             background: #c53030;
         }
+        .checkout-button {
+            margin-top: 20px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg,#4c51bf 0%,#553c9a 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        .checkout-button:hover:not(:disabled) {
+            background: linear-gradient(135deg,#553c9a 0%,#4c51bf 100%);
+        }
+
+        .checkout-button:disabled {
+            background: #ccc;
+            color: #666;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -163,7 +226,7 @@ if ($result->num_rows > 0) {
         <h2 class="section-title">Keranjang Saya</h2>
 
         <?php if (!empty($items)): ?>
-            <div class="products-grid">
+            <div class="products-grid" id="cart-items">
                 <?php foreach ($items as $item): ?>
                     <div class="product-card" id="item-<?php echo $item['id']; ?>">
                         <div class="product-image-container">
@@ -189,10 +252,13 @@ if ($result->num_rows > 0) {
                     </div>
                 <?php endforeach; ?>
             </div>
-            <h3 style="margin-top:20px;color:#4c51bf;">Total: Rp <span id="total-cart"><?php echo number_format($total, 0, ',', '.'); ?></span></h3>
-            <button style="margin-top:20px;padding:12px 20px;background:linear-gradient(135deg,#4c51bf 0%,#553c9a 100%);color:white;border:none;border-radius:8px;cursor:pointer;">Checkout</button>
+            <h3 style="margin-top:20px;color:#4c51bf;">
+                Total: Rp <span id="total-cart"><?php echo number_format($total, 0, ',', '.'); ?></span>
+            </h3>
+            <button id="checkout-btn" class="checkout-button" onclick="window.location.href='checkout.php'">Checkout</button>
         <?php else: ?>
             <p>Tidak ada item di keranjang.</p>
+            <button id="checkout-btn" class="checkout-button" disabled>Checkout</button>
         <?php endif; ?>
     </div>
 </main>
@@ -223,6 +289,9 @@ function updateQty(itemId, action) {
             if (data.new_qty === 0) {
                 document.getElementById("item-" + itemId).remove();
             }
+
+            // Disable tombol checkout kalau semua item habis
+            checkCartEmpty();
         } else {
             alert(data.message);
         }
@@ -242,6 +311,9 @@ function deleteItem(itemId) {
             if (data.success) {
                 document.getElementById("item-" + itemId).remove();
                 document.getElementById("total-cart").innerText = data.new_total;
+
+                // Disable tombol checkout kalau semua item habis
+                checkCartEmpty();
             } else {
                 alert(data.message);
             }
@@ -249,7 +321,14 @@ function deleteItem(itemId) {
         .catch(err => console.error(err));
     }
 }
+
+function checkCartEmpty() {
+    let cartItems = document.querySelectorAll("#cart-items .product-card");
+    let checkoutBtn = document.getElementById("checkout-btn");
+    if (cartItems.length === 0) {
+        checkoutBtn.disabled = true;
+    }
+}
 </script>
 </body>
 </html>
-
